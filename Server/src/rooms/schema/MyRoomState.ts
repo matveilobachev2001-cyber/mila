@@ -17,6 +17,12 @@ export const LeaderboardEntry = schema({
 });
 export type LeaderboardEntry = SchemaType<typeof LeaderboardEntry>;
 
+export const MoveInput = schema({
+  moveX: t.number(),
+  moveY: t.number(),
+});
+export type MoveInput = SchemaType<typeof MoveInput>;
+
 export const MyRoomState = schema({
   players: t.map(Player),
   leaderboard: t.array(LeaderboardEntry),
