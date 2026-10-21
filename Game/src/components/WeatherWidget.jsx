@@ -10,7 +10,9 @@ export default function WeatherWidget() {
   useEffect(() => {
     const fetchWeather = async () => {
       try {
-        const response = await fetch('/api/weather');
+        const response = await fetch(
+  'https://luchshaia-igra-mira.onrender.com/api/weather'
+);
 
         if (!response.ok) {
           throw new Error(`Server responded: ${response.status}`);

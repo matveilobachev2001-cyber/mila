@@ -10,7 +10,9 @@ export default function CurrencyWidget() {
   useEffect(() => {
     const fetchRate = async () => {
       try {
-        const response = await fetch('/api/cbr');
+        const response = await fetch(
+  'https://luchshaia-igra-mira.onrender.com/api/cbr'
+);
         if (!response.ok) throw new Error(`Server responded: ${response.status}`);
         const xmlText = await response.text();
 
