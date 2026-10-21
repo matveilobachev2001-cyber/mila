@@ -1,30 +1,27 @@
-import { schema, t, type SchemaType } from "@colyseus/schema";
+import { Schema, type, MapSchema, ArraySchema } from "@colyseus/schema";
 
-export const Player = schema({
-  name: t.string(),
-  score: t.number(),
-  isAlive: t.boolean(),
-  status: t.string(),        // 'lobby' | 'playing' | 'left'
-  joinedAt: t.number(),
-  leftAt: t.number(),        // 0 пока активен, метка времени — после выхода
-});
-export type Player = SchemaType<typeof Player>;
+// Класс входных данных (обязательно extends Schema)
+export class MoveInput extends Schema {
+  @type("number") moveX: number = 0;
+  @type("number") moveY: number = 0;
+}
 
-export const LeaderboardEntry = schema({
-  name: t.string(),
-  score: t.number(),
-  date: t.number(),
-});
-export type LeaderboardEntry = SchemaType<typeof LeaderboardEntry>;
+export class Player extends Schema {
+  @type("string") name: string = "";
+  @type("number") score: number = 0;
+  @type("boolean") isAlive: boolean = true;
+  @type("string") status: string = "lobby";
+  @type("number") joinedAt: number = 0;
+  @type("number") leftAt: number = 0;
+}
 
-export const MoveInput = schema({
-  moveX: t.number(),
-  moveY: t.number(),
-});
-export type MoveInput = SchemaType<typeof MoveInput>;
+export class LeaderboardEntry extends Schema {
+  @type("string") name: string = "";
+  @type("number") score: number = 0;
+  @type("number") date: number = 0;
+}
 
-export const MyRoomState = schema({
-  players: t.map(Player),
-  leaderboard: t.array(LeaderboardEntry),
-});
-export type MyRoomState = SchemaType<typeof MyRoomState>;
+export class MyRoomState extends Schema {
+  @type({ map: Player }) players = new MapSchema<Player>();
+  @type([LeaderboardEntry]) leaderboard = new ArraySchema<LeaderboardEntry>();
+}

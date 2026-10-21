@@ -1,5 +1,5 @@
 import { Room, Client, CloseCode } from "colyseus";
-import { MyRoomState, Player, LeaderboardEntry } from "./schema/MyRoomState.js";
+import { MyRoomState, Player, LeaderboardEntry, MoveInput } from "./schema/MyRoomState.js";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -38,6 +38,8 @@ export class MyRoom extends Room<{ state: MyRoomState }> {
   private leaderboard: LeaderboardRecord[] = [];
 
   onCreate(_options: any) {
+    this.defineInput(MoveInput); // <--- Вызов здесь
+    
     console.log("Room created:", this.roomId);
     this.leaderboard = loadLeaderboard();
     this.syncLeaderboardToState();
@@ -57,29 +59,26 @@ export class MyRoom extends Room<{ state: MyRoomState }> {
   }
 
   private addToLeaderboard(name: string, score: number) {
-  // Ищем существующую запись с таким же именем
-  const existingIdx = this.leaderboard.findIndex((e) => e.name === name);
+    const existingIdx = this.leaderboard.findIndex((e) => e.name === name);
 
-  if (existingIdx >= 0) {
-    // Обновляем только если новый счёт выше
-    if (score > this.leaderboard[existingIdx].score) {
-      this.leaderboard[existingIdx].score = score;
-      this.leaderboard[existingIdx].date = Date.now();
-      console.log(`[leaderboard] обновил рекорд ${name}: ${score}`);
+    if (existingIdx >= 0) {
+      if (score > this.leaderboard[existingIdx].score) {
+        this.leaderboard[existingIdx].score = score;
+        this.leaderboard[existingIdx].date = Date.now();
+        console.log(`[leaderboard] обновил рекорд ${name}: ${score}`);
+      } else {
+        console.log(`[leaderboard] ${name} результат ${score} не улучшил свой рекорд`);
+      }
     } else {
-      console.log(`[leaderboard] ${name} результат ${score} не улучшил свой рекорд`);
+      this.leaderboard.push({ name, score, date: Date.now() });
+      console.log(`[leaderboard] добавил ${name}: ${score}`);
     }
-  } else {
-    // Новая запись
-    this.leaderboard.push({ name, score, date: Date.now() });
-    console.log(`[leaderboard] добавил ${name}: ${score}`);
-  }
 
-  this.leaderboard.sort((a, b) => b.score - a.score);
-  this.leaderboard = this.leaderboard.slice(0, MAX_LEADERBOARD);
-  saveLeaderboard(this.leaderboard);
-  this.syncLeaderboardToState();
-}
+    this.leaderboard.sort((a, b) => b.score - a.score);
+    this.leaderboard = this.leaderboard.slice(0, MAX_LEADERBOARD);
+    saveLeaderboard(this.leaderboard);
+    this.syncLeaderboardToState();
+  }
 
   messages = {
     setStatus: (client: Client, data: { status: string }) => {
@@ -108,8 +107,6 @@ export class MyRoom extends Room<{ state: MyRoomState }> {
     const name = (options?.name || "Anonymous").toString().slice(0, 20);
     console.log(`[join] ${name} (${client.sessionId})`);
 
-    // Если в списке уже есть запись с таким же именем и статусом 'left' —
-    // значит игрок вернулся. Убираем старую запись, чтобы не было дубликата.
     const stale: string[] = [];
     this.state.players.forEach((p, sid) => {
       if (p.name === name) stale.push(sid);
@@ -140,8 +137,6 @@ export class MyRoom extends Room<{ state: MyRoomState }> {
       player.isAlive = false;
       player.leftAt = Date.now();
     }
-    // НЕ удаляем игрока из state — он остаётся в списке навсегда,
-    // помеченный как «вышел» (💤). Уберётся только если вернётся с тем же именем.
   }
 
   onDrop(client: Client, _code: CloseCode) {
