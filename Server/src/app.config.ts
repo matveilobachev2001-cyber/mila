@@ -9,31 +9,18 @@ import {
   matchMaker,
 } from "colyseus";
 
-const FRONTEND_ORIGINS = [
-  "https://mila-1.onrender.com",
-  "https://mila.onrender.com",
-  "http://localhost:5173",
-  "http://localhost:4173",
-  "http://localhost:3000",
-].filter(Boolean);
-
-const allowOrigin = (origin?: string) => {
-  if (!origin) return "*";
-  return FRONTEND_ORIGINS.includes(origin) ? origin : "*";
-};
+const allowAllOrigin = "*";
 
 /**
  * Import your Room files
  */
 import { MyRoom } from "./rooms/MyRoom.js";
 
-matchMaker.controller.getCorsHeaders = function (req) {
-  const origin = req.headers.origin;
+matchMaker.controller.getCorsHeaders = function () {
   return {
-    "Access-Control-Allow-Origin": allowOrigin(origin),
+    "Access-Control-Allow-Origin": allowAllOrigin,
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
-    "Access-Control-Allow-Credentials": "true",
     "Vary": "Origin",
   };
 };
@@ -63,13 +50,9 @@ const server = defineServer({
   express: (app) => {
 
     app.use((req, res, next) => {
-      const origin = req.headers.origin;
-      const corsOrigin = allowOrigin(origin);
-
-      res.header("Access-Control-Allow-Origin", corsOrigin);
+      res.header("Access-Control-Allow-Origin", allowAllOrigin);
       res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
       res.header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
-      res.header("Access-Control-Allow-Credentials", "true");
       res.header("Vary", "Origin");
 
       if (req.method === "OPTIONS") {
