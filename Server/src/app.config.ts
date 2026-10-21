@@ -6,12 +6,37 @@ import {
   createRouter,
   createEndpoint,
   LobbyRoom,
+  matchMaker,
 } from "colyseus";
+
+const FRONTEND_ORIGINS = [
+  "https://mila-1.onrender.com",
+  "https://mila.onrender.com",
+  "http://localhost:5173",
+  "http://localhost:4173",
+  "http://localhost:3000",
+].filter(Boolean);
+
+const allowOrigin = (origin?: string) => {
+  if (!origin) return "*";
+  return FRONTEND_ORIGINS.includes(origin) ? origin : "*";
+};
 
 /**
  * Import your Room files
  */
 import { MyRoom } from "./rooms/MyRoom.js";
+
+matchMaker.controller.getCorsHeaders = function (req) {
+  const origin = req.headers.origin;
+  return {
+    "Access-Control-Allow-Origin": allowOrigin(origin),
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
+    "Access-Control-Allow-Credentials": "true",
+    "Vary": "Origin",
+  };
+};
 
 const server = defineServer({
 
@@ -25,10 +50,6 @@ const server = defineServer({
 
   /**
    * Experimental: Define API routes. Built-in integration with the "playground" and SDK.
-   *
-   * Usage from SDK:
-   *   client.http.get("/api/hello").then((response) => {})
-   *
    */
   routes: createRouter({
     api_hello: createEndpoint("/api/hello", { method: "GET" }, async (ctx) => {
@@ -38,19 +59,25 @@ const server = defineServer({
 
   /**
    * Bind your custom express routes here:
-   * Read more: https://expressjs.com/en/starter/basic-routing.html
    */
   express: (app) => {
 
-    // ===== CORS для разработки =====
     app.use((req, res, next) => {
-      res.header("Access-Control-Allow-Origin", "*");
-      res.header("Access-Control-Allow-Headers", "*");
-      res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-      if (req.method === "OPTIONS") return res.sendStatus(200);
+      const origin = req.headers.origin;
+      const corsOrigin = allowOrigin(origin);
+
+      res.header("Access-Control-Allow-Origin", corsOrigin);
+      res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
+      res.header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
+      res.header("Access-Control-Allow-Credentials", "true");
+      res.header("Vary", "Origin");
+
+      if (req.method === "OPTIONS") {
+        return res.sendStatus(204);
+      }
+
       next();
     });
-    // ===============================
 
     app.get("/hi", (req, res) => {
       res.send("It's time to kick ass and chew bubblegum!");
@@ -58,8 +85,6 @@ const server = defineServer({
 
     /**
      * Use @colyseus/monitor
-     * If you expose it in production, make sure to protect it with a password:
-     * https://docs.colyseus.io/tools/monitoring#password-protection
      */
     if (process.env.NODE_ENV !== "production") {
       app.use("/monitor", monitor());
@@ -67,7 +92,6 @@ const server = defineServer({
 
     /**
      * Use @colyseus/playground
-     * (It is not recommended to expose this route in a production environment)
      */
     if (process.env.NODE_ENV !== "production") {
       app.use("/playground", playground());
