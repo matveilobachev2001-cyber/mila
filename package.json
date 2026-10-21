@@ -1,0 +1,12 @@
+{
+  "name": "cyberdodge-monorepo",
+  "private": true,
+  "scripts": {
+    "dev": "npx concurrently -n game,server -c blue,green \"npm --prefix Game run dev -- --host 0.0.0.0\" \"npm --prefix Server run start\"",
+    "start": "npm run dev",
+    "build": "npm --prefix Game run build && npm --prefix Server run build"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}
