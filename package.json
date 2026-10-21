@@ -8,5 +8,10 @@
   },
   "devDependencies": {
     "concurrently": "^9.1.0"
+  },
+  "dependencies": {
+    "build": "^0.1.4",
+    "npm": "^11.21.1",
+    "run": "^2.1.10"
   }
 }

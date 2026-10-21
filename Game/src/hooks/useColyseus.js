@@ -1,7 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Client } from '@colyseus/sdk';
 
-const SERVER_URL = window.location.origin.replace(/^http/, 'ws') + '/colyseus';
+const SERVER_URL =
+  (import.meta.env.VITE_COLYSEUS_URL && import.meta.env.VITE_COLYSEUS_URL.trim()) ||
+  `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/colyseus`;
+
 const ROOM_NAME = 'my_room';
 
 export function useColyseus() {
